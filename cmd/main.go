@@ -1,7 +1,7 @@
 package main
 
-import "ejercicio-golang/internal/api/http"
+import "ejercicio-golang/internal/api/cryptocurrency/http"
 
 func main() {
-	http.GetResponse()
+	http.GetCryptocurrencyPrice("bitcoin")
 }
