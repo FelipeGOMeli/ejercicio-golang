@@ -2,7 +2,7 @@ package api
 
 type Response struct {
 	Id      string `json:"id"`
-	Details `json:"content"`
+	Details `json:"content,omitempty"`
 	Partial bool `json:"partial"`
 }
 
