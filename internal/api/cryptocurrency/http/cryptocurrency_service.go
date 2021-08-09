@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
 type cryptocurrencyService struct {
@@ -29,6 +30,14 @@ func (s *cryptocurrencyService) GetCryptocurrencyPrice(cryptocurrencyId string, 
 		return
 	}
 
+	defer func() { // recovers from panic, login errors and returning
+		if r := recover(); r != nil {
+			log.Panic("panic ocurred")
+			err = errors.Errorf("panic ocurred: %v", r)
+			return
+		}
+	}()
+
 	defer r.Body.Close() //Close body reading
 
 	var cryptocurrency cryptocurrency.Cryptocurrency
@@ -39,11 +48,10 @@ func (s *cryptocurrencyService) GetCryptocurrencyPrice(cryptocurrencyId string, 
 		return
 	}
 
-	parsedResponse := api.Response{}
+	response = api.NewResponse(cryptocurrencyId)
 
 	if r.StatusCode != http.StatusOK {
-		parsedResponse = api.Response{Id: cryptocurrencyId, Partial: true}
-		return &parsedResponse, nil
+		return
 	}
 
 	err = json.Unmarshal(body, &cryptocurrency)
@@ -51,13 +59,14 @@ func (s *cryptocurrencyService) GetCryptocurrencyPrice(cryptocurrencyId string, 
 		return
 	}
 	content := api.Payload{Price: cryptocurrency.MarketData.CurrentPrice.Usd, Currency: "USD"}
-	parsedResponse = api.Response{Id: cryptocurrency.Symbol, Payload: &content, Partial: false}
+	response.SetPayload(&content)
+	response.Partial = false
 
-	return &parsedResponse, nil
+	return response, nil
 }
 
 func (s *cryptocurrencyService) GetCryptocurrenciesPrices(cryptocurrencyIds []string, c *gin.Context) (response []api.Response) {
-	cryptocurrencies := make(chan api.Response) // create channel to receive API responses
+	cryptocurrencies := make(chan api.Response) // creates channel to receive API responses
 
 	for _, id := range cryptocurrencyIds {
 		id := id
@@ -67,21 +76,18 @@ func (s *cryptocurrencyService) GetCryptocurrenciesPrices(cryptocurrencyIds []st
 				return
 			}
 			if cryptocurrency != nil {
-				cryptocurrencies <- *cryptocurrency //sent response to channel
+				cryptocurrencies <- *cryptocurrency //sends response to channel
 			}
 		}()
 	}
 
+	defer close(cryptocurrencies) // closes cryptocurrnecy channel
+
 	var cryptocurrenciesSlice []api.Response //slice to receive and present responses
-	timeout := time.After(1 * time.Second)
 
 	for range cryptocurrencyIds { // reading channel response and appending to response slice
-		select {
-		case result := <-cryptocurrencies:
-			cryptocurrenciesSlice = append(cryptocurrenciesSlice, result)
-		case <-timeout:
-			fmt.Println("timed out")
-		}
+		result := <-cryptocurrencies
+		cryptocurrenciesSlice = append(cryptocurrenciesSlice, result)
 	}
 	return cryptocurrenciesSlice
 }

@@ -8,14 +8,20 @@ type Response struct {
 	Partial  bool `json:"partial"`
 }
 
-type PartialResponse struct {
-	Id      string `json:"id"`
-	Partial bool   `json:"partial"`
-}
-
 type Payload struct {
 	Price    float64 `json:"price,omitempty"`
 	Currency string  `json:"currency,omitempty"`
+}
+
+func NewResponse(id string) *Response {
+	return &Response{
+		Id:      id,
+		Partial: true,
+	}
+}
+
+func (r *Response) SetPayload(payload *Payload) {
+	r.Payload = payload
 }
 
 func HasPartialResponse(response []Response) int {
