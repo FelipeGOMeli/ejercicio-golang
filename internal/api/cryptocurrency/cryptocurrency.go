@@ -17,6 +17,6 @@ type Cryptocurrency struct {
 }
 
 type CryptocurrencyService interface {
-	GetCryptocurrencyPrice(CryptocurrencyId string, c *gin.Context) (response *api.Response)
-	GetCryptocurrenciesPrices(cryptocurrencyIds []string, c *gin.Context) []api.Response
+	GetCryptocurrencyPrice(CryptocurrencyId string, c *gin.Context) (response *api.Response, err error)
+	GetCryptocurrenciesPrices(cryptocurrencyIds []string, c *gin.Context) (response []api.Response)
 }

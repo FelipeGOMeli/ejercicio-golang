@@ -1,8 +1,8 @@
 package main
 
 import (
+	"ejercicio-golang/internal/api"
 	cryptocurrencyHttp "ejercicio-golang/internal/api/cryptocurrency/http"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,9 +13,10 @@ func main() {
 	cryptocurrencyService := cryptocurrencyHttp.NewCryptocurrencyService()
 
 	router.GET("/myapi", func(c *gin.Context) {
-		cryptocurrenciesIds := []string{"bitcoin", "ethereum", "dogecoin"}
+		cryptocurrenciesIds := []string{"bitcoin", "ethereum", "doge"}
 		response := cryptocurrencyService.GetCryptocurrenciesPrices(cryptocurrenciesIds, c)
-		c.JSON(http.StatusOK, response)
+
+		c.JSON(api.HasPartialResponse(response), response)
 	})
 
 	router.Run()
