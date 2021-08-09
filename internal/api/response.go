@@ -1,7 +1,5 @@
 package api
 
-import "net/http"
-
 type Response struct {
 	Id       string `json:"id"`
 	*Payload `json:"content,omitempty"`
@@ -20,15 +18,13 @@ func NewResponse(id string) *Response {
 	}
 }
 
-func (r *Response) SetPayload(payload *Payload) {
-	r.Payload = payload
+func NewPayload(price float64, currency string) *Payload {
+	return &Payload{
+		Price:    price,
+		Currency: currency,
+	}
 }
 
-func HasPartialResponse(response []Response) int {
-	for _, r := range response {
-		if r.Partial {
-			return http.StatusPartialContent
-		}
-	}
-	return http.StatusOK
+func (r *Response) SetPayload(payload *Payload) {
+	r.Payload = payload
 }

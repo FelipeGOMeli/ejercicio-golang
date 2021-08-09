@@ -1,23 +1,18 @@
 package main
 
 import (
-	"ejercicio-golang/internal/api"
 	cryptocurrencyHttp "ejercicio-golang/internal/api/cryptocurrency/http"
-
-	"github.com/gin-gonic/gin"
+	"ejercicio-golang/internal/server"
+	cryptoController "ejercicio-golang/internal/server/cryptocurrency"
 )
 
+const serverAddress = ":8080"
+
 func main() {
-	router := gin.Default()
-
 	cryptocurrencyService := cryptocurrencyHttp.NewCryptocurrencyService()
+	cryptocurrencyController := cryptoController.NewCryptocurrencyController(cryptocurrencyService)
 
-	router.GET("/myapi", func(c *gin.Context) {
-		cryptocurrenciesIds := []string{"bitcoin", "ethereum", "doge"}
-		response := cryptocurrencyService.GetCryptocurrenciesPrices(cryptocurrenciesIds, c)
+	router := server.NewRouter(cryptocurrencyController)
 
-		c.JSON(api.HasPartialResponse(response), response)
-	})
-
-	router.Run()
+	router.Run(serverAddress)
 }
