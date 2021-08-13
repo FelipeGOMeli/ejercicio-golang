@@ -1,7 +1,6 @@
 package http
 
 import (
-	"ejercicio-golang/internal/api"
 	"ejercicio-golang/internal/api/cryptocurrency"
 	"encoding/json"
 	"fmt"
@@ -26,10 +25,10 @@ func NewCryptocurrencyService(endpoint url.URL) cryptocurrency.CryptocurrencySer
 	return &cryptocurrencyService{endpoint: endpoint}
 }
 
-func (s *cryptocurrencyService) GetCryptocurrencyPrice(cryptocurrencyId string, c *gin.Context) (response *api.Response, err error) {
-	response = api.NewResponse(cryptocurrencyId)
-	externalUrl := setCryptocurrencyId(cryptocurrencyId, s.endpoint)
-	r, err := http.Get(externalUrl)
+func (s *cryptocurrencyService) GetCryptocurrencyPrice(cryptocurrencyId string, c *gin.Context) (response *cryptocurrency.CryptocurrencyResponse, err error) {
+	response = cryptocurrency.NewResponse(cryptocurrencyId)
+	externalEndpoint := setCryptocurrencyId(cryptocurrencyId, s.endpoint)
+	r, err := http.Get(externalEndpoint)
 
 	if err != nil {
 		return
@@ -45,7 +44,7 @@ func (s *cryptocurrencyService) GetCryptocurrencyPrice(cryptocurrencyId string, 
 
 	defer r.Body.Close() //Closes body reading after
 
-	var cryptocurrency cryptocurrency.Cryptocurrency
+	var cryptocurrencyPayload cryptocurrency.Cryptocurrency
 
 	body, err := ioutil.ReadAll(r.Body)
 
@@ -57,19 +56,18 @@ func (s *cryptocurrencyService) GetCryptocurrencyPrice(cryptocurrencyId string, 
 		return
 	}
 
-	err = json.Unmarshal(body, &cryptocurrency)
+	err = json.Unmarshal(body, &cryptocurrencyPayload)
 	if err != nil {
-		panic("failed to parse file")
+		panic("failed to parse json")
 	}
-	content := api.NewPayload(cryptocurrency.MarketData.CurrentPrice.Usd, currency)
-	response.SetPayload(content)
-	response.Partial = false
+	content := cryptocurrency.NewPayload(cryptocurrencyPayload.MarketData.CurrentPrice.Usd, currency)
+	response.SetPayload(*content)
 
 	return response, nil
 }
 
-func (s *cryptocurrencyService) GetCryptocurrenciesPrices(cryptocurrencyIds []string, c *gin.Context) (response []api.Response) {
-	cryptocurrencies := make(chan api.Response, len(cryptocurrencyIds)) //creates channel to receive API responses
+func (s *cryptocurrencyService) GetCryptocurrenciesPrices(cryptocurrencyIds []string, c *gin.Context) (response []cryptocurrency.CryptocurrencyResponse) {
+	cryptocurrencies := make(chan cryptocurrency.CryptocurrencyResponse, len(cryptocurrencyIds)) //creates channel to receive API responses
 
 	var wg sync.WaitGroup
 	wg.Add(len(cryptocurrencyIds))
@@ -78,12 +76,12 @@ func (s *cryptocurrencyService) GetCryptocurrenciesPrices(cryptocurrencyIds []st
 		id := id
 		go func() { //go routine to call API (independently execution for each id)
 			defer wg.Done() //after execution decrements wg counter
-			cryptocurrency, err := s.GetCryptocurrencyPrice(id, c)
+			cryptocurrencyResponse, err := s.GetCryptocurrencyPrice(id, c)
 			if err != nil {
 				fmt.Printf("failed to get %v price\n", id)
 			}
-			if cryptocurrency != nil {
-				cryptocurrencies <- *cryptocurrency //sends response to channel
+			if cryptocurrencyResponse != nil {
+				cryptocurrencies <- *cryptocurrencyResponse //sends response to channel
 			}
 		}()
 	}
@@ -91,7 +89,7 @@ func (s *cryptocurrencyService) GetCryptocurrenciesPrices(cryptocurrencyIds []st
 	wg.Wait()               //waits until all requests finishes
 	close(cryptocurrencies) //closes cryptocurrnecy channel
 
-	var cryptocurrenciesSlice []api.Response //slice to receive and show responses
+	var cryptocurrenciesSlice []cryptocurrency.CryptocurrencyResponse //slice to receive and show responses
 
 	for range cryptocurrencyIds { //reading channel response and appending to responses slice
 		result := <-cryptocurrencies

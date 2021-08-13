@@ -1,8 +1,6 @@
 package cryptocurrency
 
 import (
-	"ejercicio-golang/internal/api"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,6 +15,42 @@ type Cryptocurrency struct {
 }
 
 type CryptocurrencyService interface {
-	GetCryptocurrencyPrice(CryptocurrencyId string, c *gin.Context) (response *api.Response, err error)
-	GetCryptocurrenciesPrices(cryptocurrencyIds []string, c *gin.Context) (response []api.Response)
+	GetCryptocurrencyPrice(CryptocurrencyId string, c *gin.Context) (response *CryptocurrencyResponse, err error)
+	GetCryptocurrenciesPrices(cryptocurrencyIds []string, c *gin.Context) (response []CryptocurrencyResponse)
+}
+
+type CryptocurrencyResponse struct {
+	Id string `json:"id"`
+	Payload
+	Partial bool `json:"partial"`
+}
+
+type Payload struct {
+	Content interface{} `json:"content,omitempty"`
+}
+
+type CryptocurrencyContent struct {
+	Price    float64 `json:"price,omitempty"`
+	Currency string  `json:"currency,omitempty"`
+}
+
+func NewResponse(id string) *CryptocurrencyResponse {
+	return &CryptocurrencyResponse{
+		Id:      id,
+		Partial: true,
+	}
+}
+
+func NewPayload(price float64, currency string) *Payload {
+	return &Payload{
+		Content: CryptocurrencyContent{
+			Price:    price,
+			Currency: currency,
+		},
+	}
+}
+
+func (r *CryptocurrencyResponse) SetPayload(payload Payload) {
+	r.Payload = payload
+	r.Partial = false
 }

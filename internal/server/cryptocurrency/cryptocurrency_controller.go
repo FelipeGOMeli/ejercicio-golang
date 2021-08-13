@@ -1,7 +1,6 @@
 package server
 
 import (
-	"ejercicio-golang/internal/api"
 	"ejercicio-golang/internal/api/cryptocurrency"
 	"ejercicio-golang/internal/server"
 
@@ -24,7 +23,7 @@ func (cyptocontroller *cryptocurrencyController) GetCryptocurrenciesPrices(c *gi
 	c.JSON(hasPartialResponse(cryptocurrencies), cryptocurrencies)
 }
 
-func hasPartialResponse(response []api.Response) int {
+func hasPartialResponse(response []cryptocurrency.CryptocurrencyResponse) int {
 	for _, r := range response {
 		if r.Partial {
 			return http.StatusPartialContent
