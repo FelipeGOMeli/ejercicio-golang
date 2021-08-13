@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"path"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -18,15 +19,16 @@ import (
 const currency = "USD"
 
 type cryptocurrencyService struct {
+	endpoint url.URL
 }
 
-func NewCryptocurrencyService() cryptocurrency.CryptocurrencyService {
-	return &cryptocurrencyService{}
+func NewCryptocurrencyService(endpoint url.URL) cryptocurrency.CryptocurrencyService {
+	return &cryptocurrencyService{endpoint: endpoint}
 }
 
 func (s *cryptocurrencyService) GetCryptocurrencyPrice(cryptocurrencyId string, c *gin.Context) (response *api.Response, err error) {
 	response = api.NewResponse(cryptocurrencyId)
-	externalUrl := setPath(cryptocurrencyId)
+	externalUrl := setCryptocurrencyId(cryptocurrencyId, s.endpoint)
 	r, err := http.Get(externalUrl)
 
 	if err != nil {
@@ -98,15 +100,8 @@ func (s *cryptocurrencyService) GetCryptocurrenciesPrices(cryptocurrencyIds []st
 	return cryptocurrenciesSlice
 }
 
-func setPath(cryptocurrencyId string) string {
-	externalUrl := url.URL{Scheme: "https", Host: "api.coingecko.com"}
-	externalUrl.Path = fmt.Sprintf("/api/v3/coins/%s", cryptocurrencyId)
-	query := externalUrl.Query()
-	query.Set("localization", "false")
-	query.Set("tickers", "false")
-	query.Set("community_data", "false")
-	query.Set("developer_data", "false")
-	query.Set("sparkline", "false")
-	externalUrl.RawQuery = query.Encode()
-	return externalUrl.String()
+func setCryptocurrencyId(cryptocurrencyId string, endpoint url.URL) string {
+	endpoint.Path = path.Join(endpoint.Path, cryptocurrencyId)
+
+	return endpoint.String()
 }
