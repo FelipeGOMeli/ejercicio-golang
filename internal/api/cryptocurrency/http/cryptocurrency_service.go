@@ -67,7 +67,7 @@ func (s *cryptocurrencyService) GetCryptocurrencyPrice(cryptocurrencyId string, 
 }
 
 func (s *cryptocurrencyService) GetCryptocurrenciesPrices(cryptocurrencyIds []string, c *gin.Context) (response []api.Response) {
-	cryptocurrencies := make(chan api.Response) //creates channel to receive API responses
+	cryptocurrencies := make(chan api.Response, len(cryptocurrencyIds)) //creates channel to receive API responses
 
 	var wg sync.WaitGroup
 	wg.Add(len(cryptocurrencyIds))
@@ -86,10 +86,8 @@ func (s *cryptocurrencyService) GetCryptocurrenciesPrices(cryptocurrencyIds []st
 		}()
 	}
 
-	go func() {
-		defer close(cryptocurrencies) //closes cryptocurrnecy channel
-		wg.Wait()                     //waits until all requests finishes
-	}()
+	wg.Wait()               //waits until all requests finishes
+	close(cryptocurrencies) //closes cryptocurrnecy channel
 
 	var cryptocurrenciesSlice []api.Response //slice to receive and show responses
 
