@@ -7,3 +7,4 @@ Objetivo:
   - Parsear JSONs en Go
   - Manejar query params, structs y errores
   - Aprender concorrencia, canales y sincronización 
+  - Hacer pruebas del PR template
