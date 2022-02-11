@@ -6,4 +6,5 @@ Objetivo:
   - Crear API Rest con gin gonic
   - Parsear JSONs en Go
   - Manejar query params, structs y errores
-  - Aprender concorrencia, canales y sincronización 
+  - Aprender concorrencia, canales y sincronización \
+  - Agregar PR Template
